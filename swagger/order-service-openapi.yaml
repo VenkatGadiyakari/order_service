@@ -1,0 +1,587 @@
+openapi: 3.0.3
+info:
+  title: Order Service API
+  description: |
+    Order Service manages the complete ticket purchase lifecycle for buyers on the event ticketing platform.
+    It validates tier availability, creates orders with snapshotted event data, integrates with Stripe for payment processing,
+    atomically decrements inventory upon successful payment, and provides buyers access to their order history.
+  version: 1.0.0
+  contact:
+    name: Ticketing Platform Team
+    email: support@ticketing.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: http://order-service:8080
+    description: Docker container server
+  - url: https://dev-api.ticketing.com
+    description: Development environment
+  - url: https://staging-api.ticketing.com
+    description: Staging environment
+  - url: https://api.ticketing.com
+    description: Production environment
+
+paths:
+  /api/orders:
+    post:
+      tags:
+        - Orders
+      summary: Create a new order and initiate payment
+      description: |
+        Buyer selects a ticket tier and quantity, then creates an order. The system validates availability,
+        creates order records, and returns a Stripe Checkout session URL for payment.
+      operationId: createOrder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            examples:
+              validRequest:
+                summary: Valid order request
+                value:
+                  tierId: "550e8400-e29b-41d4-a716-446655440000"
+                  quantity: 2
+      responses:
+        '201':
+          description: Order created successfully
+          headers:
+            X-Trace-Id:
+              schema:
+                type: string
+              description: Trace ID for request tracking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+              examples:
+                success:
+                  summary: Successful order creation
+                  value:
+                    orderId: "660e8400-e29b-41d4-a716-446655440001"
+                    stripeCheckoutUrl: "https://checkout.stripe.com/pay/cs_test_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8s9T0"
+        '400':
+          description: Bad request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidQuantity:
+                  summary: Quantity validation failed
+                  value:
+                    errorCode: "VALIDATION_FAILED"
+                    message: "quantity must be at least 1"
+                    timestamp: "2026-04-21T10:30:00Z"
+                    traceId: "550e8400-e29b-41d4-a716-446655440000"
+                quantityExceedsMax:
+                  summary: Quantity exceeds maximum
+                  value:
+                    errorCode: "VALIDATION_FAILED"
+                    message: "Quantity exceeds maximum allowed per order. Requested: 10, Maximum: 5"
+                    timestamp: "2026-04-21T10:30:00Z"
+                    traceId: "550e8400-e29b-41d4-a716-446655440000"
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Ticket tier not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - insufficient inventory or tier/event not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                soldOut:
+                  summary: Insufficient tickets
+                  value:
+                    errorCode: "CONFLICT"
+                    message: "Insufficient tickets available. Requested: 5, Available: 2"
+                    timestamp: "2026-04-21T10:30:00Z"
+                    traceId: "550e8400-e29b-41d4-a716-446655440000"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/my:
+    get:
+      tags:
+        - Orders
+      summary: Retrieve buyer's order history
+      description: Returns paginated list of confirmed orders for the authenticated buyer
+      operationId: getMyOrders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (zero-indexed)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of orders per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Order history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderHistoryResponse'
+              examples:
+                withOrders:
+                  summary: Buyer with orders
+                  value:
+                    content:
+                      - orderId: "660e8400-e29b-41d4-a716-446655440001"
+                        status: "CONFIRMED"
+                        totalAmount: 5000.00
+                        createdAt: "2026-04-15T10:30:00Z"
+                        items:
+                          - orderItemId: "770e8400-e29b-41d4-a716-446655440002"
+                            tierName: "VIP"
+                            eventTitle: "Rock Concert 2026"
+                            eventDate: "2026-05-20T19:00:00Z"
+                            quantity: 2
+                            unitPrice: 2500.00
+                    page: 0
+                    size: 10
+                    totalElements: 1
+                    totalPages: 1
+                noOrders:
+                  summary: Buyer with no orders
+                  value:
+                    content: []
+                    page: 0
+                    size: 10
+                    totalElements: 0
+                    totalPages: 0
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/{id}:
+    get:
+      tags:
+        - Orders
+      summary: Retrieve single order detail
+      description: Returns detailed information about a specific order
+      operationId: getOrderById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetailResponse'
+              examples:
+                confirmedOrder:
+                  summary: Confirmed order
+                  value:
+                    orderId: "660e8400-e29b-41d4-a716-446655440001"
+                    status: "CONFIRMED"
+                    totalAmount: 5000.00
+                    stripeSessionId: "cs_test_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6"
+                    createdAt: "2026-04-15T10:30:00Z"
+                    updatedAt: "2026-04-15T10:35:00Z"
+                    items:
+                      - orderItemId: "770e8400-e29b-41d4-a716-446655440002"
+                        tierId: "550e8400-e29b-41d4-a716-446655440000"
+                        tierName: "VIP"
+                        eventTitle: "Rock Concert 2026"
+                        eventDate: "2026-05-20T19:00:00Z"
+                        quantity: 2
+                        unitPrice: 2500.00
+                        createdAt: "2026-04-15T10:30:00Z"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - order belongs to another buyer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/payments/webhook:
+    post:
+      tags:
+        - Payments
+      summary: Process Stripe payment webhook
+      description: |
+        Handles Stripe webhook events for payment confirmation. Verifies signature,
+        processes checkout completion, and atomically decrements inventory.
+      operationId: handlePaymentWebhook
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          description: Stripe webhook signature for verification
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Stripe webhook event payload
+      responses:
+        '200':
+          description: Webhook received and processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '400':
+          description: Invalid signature or malformed payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: Returns service health status
+      operationId: health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  /health/live:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      description: Kubernetes liveness probe endpoint
+      operationId: liveness
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Kubernetes readiness probe endpoint
+      operationId: readiness
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token with BUYER role
+
+  schemas:
+    CreateOrderRequest:
+      type: object
+      required:
+        - tierId
+        - quantity
+      properties:
+        tierId:
+          type: string
+          format: uuid
+          description: Identifier of the ticket tier to purchase
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Number of tickets to purchase
+          example: 2
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          description: Unique identifier of the created order
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        stripeCheckoutUrl:
+          type: string
+          format: uri
+          description: Stripe Checkout session URL for payment
+          example: "https://checkout.stripe.com/pay/cs_test_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6"
+
+    OrderHistoryResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSummary'
+        page:
+          type: integer
+          description: Current page number
+          example: 0
+        size:
+          type: integer
+          description: Page size
+          example: 10
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of orders
+          example: 1
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 1
+
+    OrderSummary:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, FAILED]
+          example: "CONFIRMED"
+        totalAmount:
+          type: number
+          format: decimal
+          description: Total order amount in INR
+          example: 5000.00
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-15T10:30:00Z"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemSummary'
+
+    OrderItemSummary:
+      type: object
+      properties:
+        orderItemId:
+          type: string
+          format: uuid
+          example: "770e8400-e29b-41d4-a716-446655440002"
+        tierName:
+          type: string
+          description: Snapshotted tier name at purchase time
+          example: "VIP"
+        eventTitle:
+          type: string
+          description: Snapshotted event title at purchase time
+          example: "Rock Concert 2026"
+        eventDate:
+          type: string
+          format: date-time
+          description: Snapshotted event date at purchase time
+          example: "2026-05-20T19:00:00Z"
+        quantity:
+          type: integer
+          example: 2
+        unitPrice:
+          type: number
+          format: decimal
+          description: Snapshotted price per ticket at purchase time
+          example: 2500.00
+
+    OrderDetailResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, FAILED]
+          example: "CONFIRMED"
+        totalAmount:
+          type: number
+          format: decimal
+          example: 5000.00
+        stripeSessionId:
+          type: string
+          example: "cs_test_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-04-15T10:35:00Z"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemDetail'
+
+    OrderItemDetail:
+      type: object
+      properties:
+        orderItemId:
+          type: string
+          format: uuid
+          example: "770e8400-e29b-41d4-a716-446655440002"
+        tierId:
+          type: string
+          format: uuid
+          description: Reference to ticket tier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        tierName:
+          type: string
+          description: Snapshotted tier name
+          example: "VIP"
+        eventTitle:
+          type: string
+          description: Snapshotted event title
+          example: "Rock Concert 2026"
+        eventDate:
+          type: string
+          format: date-time
+          description: Snapshotted event date
+          example: "2026-05-20T19:00:00Z"
+        quantity:
+          type: integer
+          example: 2
+        unitPrice:
+          type: number
+          format: decimal
+          description: Snapshotted unit price
+          example: 2500.00
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-15T10:30:00Z"
+
+    WebhookResponse:
+      type: object
+      properties:
+        received:
+          type: boolean
+          description: Acknowledgment that webhook was received
+          example: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          description: Error code identifier
+          example: "VALIDATION_FAILED"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Quantity exceeds maximum allowed per order"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2026-04-21T10:30:00Z"
+        traceId:
+          type: string
+          description: Trace ID for request tracking
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+tags:
+  - name: Orders
+    description: Order management endpoints
+  - name: Payments
+    description: Payment webhook endpoints
+  - name: Health
+    description: Health check endpoints
