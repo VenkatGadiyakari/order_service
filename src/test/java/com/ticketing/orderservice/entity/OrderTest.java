@@ -16,16 +16,16 @@ class OrderTest {
         UUID buyerId = UUID.randomUUID();
         OrderStatus status = OrderStatus.PENDING;
         BigDecimal totalAmount = new BigDecimal("5000.00");
-        String stripeSessionId = "cs_test_123";
+        String razorpayPaymentLinkId = "plink_test_123";
         Instant now = Instant.now();
 
-        Order order = new Order(id, buyerId, status, totalAmount, stripeSessionId, now, now);
+        Order order = new Order(id, buyerId, status, totalAmount, razorpayPaymentLinkId, now, now);
 
         assertEquals(id, order.getId());
         assertEquals(buyerId, order.getBuyerId());
         assertEquals(status, order.getStatus());
         assertEquals(totalAmount, order.getTotalAmount());
-        assertEquals(stripeSessionId, order.getStripeSessionId());
+        assertEquals(razorpayPaymentLinkId, order.getRazorpayPaymentLinkId());
         assertEquals(now, order.getCreatedAt());
         assertEquals(now, order.getUpdatedAt());
         assertNotNull(order.getItems());
@@ -39,7 +39,7 @@ class OrderTest {
         UUID buyerId = UUID.randomUUID();
         OrderStatus status = OrderStatus.CONFIRMED;
         BigDecimal totalAmount = new BigDecimal("3000.00");
-        String stripeSessionId = "cs_test_456";
+        String razorpayPaymentLinkId = "plink_test_456";
         Instant createdAt = Instant.now();
         Instant updatedAt = Instant.now();
 
@@ -47,7 +47,7 @@ class OrderTest {
         order.setBuyerId(buyerId);
         order.setStatus(status);
         order.setTotalAmount(totalAmount);
-        order.setStripeSessionId(stripeSessionId);
+        order.setRazorpayPaymentLinkId(razorpayPaymentLinkId);
         order.setCreatedAt(createdAt);
         order.setUpdatedAt(updatedAt);
 
@@ -55,7 +55,7 @@ class OrderTest {
         assertEquals(buyerId, order.getBuyerId());
         assertEquals(status, order.getStatus());
         assertEquals(totalAmount, order.getTotalAmount());
-        assertEquals(stripeSessionId, order.getStripeSessionId());
+        assertEquals(razorpayPaymentLinkId, order.getRazorpayPaymentLinkId());
         assertEquals(createdAt, order.getCreatedAt());
         assertEquals(updatedAt, order.getUpdatedAt());
     }
@@ -111,7 +111,7 @@ class OrderTest {
         assertNull(order.getBuyerId());
         assertNull(order.getStatus());
         assertNull(order.getTotalAmount());
-        assertNull(order.getStripeSessionId());
+        assertNull(order.getRazorpayPaymentLinkId());
         assertNull(order.getCreatedAt());
         assertNull(order.getUpdatedAt());
         assertNotNull(order.getItems());

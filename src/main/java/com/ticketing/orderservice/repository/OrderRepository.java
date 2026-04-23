@@ -17,5 +17,5 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     Optional<Order> findByIdAndBuyerId(UUID id, UUID buyerId);
 
-    Optional<Order> findByStripeSessionId(String stripeSessionId);
+    Optional<Order> findByRazorpayPaymentLinkId(String razorpayPaymentLinkId);
 }

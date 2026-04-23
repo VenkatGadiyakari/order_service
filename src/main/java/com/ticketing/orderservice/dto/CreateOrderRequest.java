@@ -1,39 +1,41 @@
 package com.ticketing.orderservice.dto;
 
-import jakarta.validation.constraints.Min;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 
 public class CreateOrderRequest {
 
-    @NotNull(message = "tierId is required")
-    private UUID tierId;
+    @NotNull(message = "eventId is required")
+    private UUID eventId;
 
-    @NotNull(message = "quantity is required")
-    @Min(value = 1, message = "quantity must be at least 1")
-    private Integer quantity;
+    @NotNull(message = "items must not be empty")
+    @Size(min = 1, message = "items must not be empty")
+    private List<@Valid OrderItemRequest> items;
 
     public CreateOrderRequest() {
     }
 
-    public CreateOrderRequest(UUID tierId, Integer quantity) {
-        this.tierId = tierId;
-        this.quantity = quantity;
+    public CreateOrderRequest(UUID eventId, List<OrderItemRequest> items) {
+        this.eventId = eventId;
+        this.items = items;
     }
 
-    public UUID getTierId() {
-        return tierId;
+    public UUID getEventId() {
+        return eventId;
     }
 
-    public void setTierId(UUID tierId) {
-        this.tierId = tierId;
+    public void setEventId(UUID eventId) {
+        this.eventId = eventId;
     }
 
-    public Integer getQuantity() {
-        return quantity;
+    public List<OrderItemRequest> getItems() {
+        return items;
     }
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
+    public void setItems(List<OrderItemRequest> items) {
+        this.items = items;
     }
 }

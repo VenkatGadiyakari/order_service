@@ -124,14 +124,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleStripeServiceException() {
-        StripeServiceException exception = new StripeServiceException("Payment failed");
+    void testHandlePaymentServiceException() {
+        PaymentServiceException exception = new PaymentServiceException("Payment failed");
 
-        ResponseEntity<ErrorResponse> response = handler.handleStripeServiceException(exception);
+        ResponseEntity<ErrorResponse> response = handler.handlePaymentServiceException(exception);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("STRIPE_ERROR", response.getBody().getErrorCode());
+        assertEquals("PAYMENT_ERROR", response.getBody().getErrorCode());
         assertEquals("Payment service error occurred", response.getBody().getMessage());
     }
 

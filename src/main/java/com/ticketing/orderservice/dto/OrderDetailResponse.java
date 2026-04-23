@@ -10,7 +10,7 @@ public class OrderDetailResponse {
     private UUID orderId;
     private String status;
     private BigDecimal totalAmount;
-    private String stripeSessionId;
+    private String razorpayPaymentLinkId;
     private Instant createdAt;
     private Instant updatedAt;
     private List<OrderItemDetail> items;
@@ -18,11 +18,11 @@ public class OrderDetailResponse {
     public OrderDetailResponse() {
     }
 
-    public OrderDetailResponse(UUID orderId, String status, BigDecimal totalAmount, String stripeSessionId, Instant createdAt, Instant updatedAt, List<OrderItemDetail> items) {
+    public OrderDetailResponse(UUID orderId, String status, BigDecimal totalAmount, String razorpayPaymentLinkId, Instant createdAt, Instant updatedAt, List<OrderItemDetail> items) {
         this.orderId = orderId;
         this.status = status;
         this.totalAmount = totalAmount;
-        this.stripeSessionId = stripeSessionId;
+        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.items = items;
@@ -52,12 +52,12 @@ public class OrderDetailResponse {
         this.totalAmount = totalAmount;
     }
 
-    public String getStripeSessionId() {
-        return stripeSessionId;
+    public String getRazorpayPaymentLinkId() {
+        return razorpayPaymentLinkId;
     }
 
-    public void setStripeSessionId(String stripeSessionId) {
-        this.stripeSessionId = stripeSessionId;
+    public void setRazorpayPaymentLinkId(String razorpayPaymentLinkId) {
+        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
     }
 
     public Instant getCreatedAt() {

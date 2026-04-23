@@ -86,19 +86,19 @@ class ExceptionsTest {
     }
 
     @Test
-    void testStripeServiceExceptionWithCause() {
-        String message = "Stripe API error";
+    void testPaymentServiceExceptionWithCause() {
+        String message = "Razorpay API error";
         Exception cause = new RuntimeException("Network timeout");
-        StripeServiceException exception = new StripeServiceException(message, cause);
+        PaymentServiceException exception = new PaymentServiceException(message, cause);
 
         assertEquals(message, exception.getMessage());
         assertEquals(cause, exception.getCause());
     }
 
     @Test
-    void testStripeServiceExceptionWithoutCause() {
+    void testPaymentServiceExceptionWithoutCause() {
         String message = "Payment processing failed";
-        StripeServiceException exception = new StripeServiceException(message);
+        PaymentServiceException exception = new PaymentServiceException(message);
 
         assertEquals(message, exception.getMessage());
         assertNull(exception.getCause());
@@ -114,7 +114,7 @@ class ExceptionsTest {
         assertTrue(QuantityExceedsMaxPerOrderException.class.getSuperclass().equals(RuntimeException.class));
         assertTrue(OrderAccessDeniedException.class.getSuperclass().equals(RuntimeException.class));
         assertTrue(UnauthorizedException.class.getSuperclass().equals(RuntimeException.class));
-        assertTrue(StripeServiceException.class.getSuperclass().equals(RuntimeException.class));
+        assertTrue(PaymentServiceException.class.getSuperclass().equals(RuntimeException.class));
     }
 
     @Test

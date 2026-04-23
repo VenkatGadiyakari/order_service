@@ -25,8 +25,8 @@ public class Order {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "stripe_session_id")
-    private String stripeSessionId;
+    @Column(name = "razorpay_payment_link_id")
+    private String razorpayPaymentLinkId;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -40,12 +40,12 @@ public class Order {
     public Order() {
     }
 
-    public Order(UUID id, UUID buyerId, OrderStatus status, BigDecimal totalAmount, String stripeSessionId, Instant createdAt, Instant updatedAt) {
+    public Order(UUID id, UUID buyerId, OrderStatus status, BigDecimal totalAmount, String razorpayPaymentLinkId, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.buyerId = buyerId;
         this.status = status;
         this.totalAmount = totalAmount;
-        this.stripeSessionId = stripeSessionId;
+        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -82,12 +82,12 @@ public class Order {
         this.totalAmount = totalAmount;
     }
 
-    public String getStripeSessionId() {
-        return stripeSessionId;
+    public String getRazorpayPaymentLinkId() {
+        return razorpayPaymentLinkId;
     }
 
-    public void setStripeSessionId(String stripeSessionId) {
-        this.stripeSessionId = stripeSessionId;
+    public void setRazorpayPaymentLinkId(String razorpayPaymentLinkId) {
+        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
     }
 
     public Instant getCreatedAt() {

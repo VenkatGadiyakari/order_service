@@ -11,14 +11,14 @@ public class AuditService {
 
     private static final Logger auditLogger = LoggerFactory.getLogger("AUDIT");
 
-    public void logOrderCreated(UUID orderId, UUID buyerId, UUID tierId, Integer quantity, String totalAmount) {
-        auditLogger.info("ORDER_CREATED - orderId={}, buyerId={}, tierId={}, quantity={}, totalAmount={}",
-                maskUuid(orderId), maskUuid(buyerId), maskUuid(tierId), quantity, maskAmount(totalAmount));
+    public void logOrderCreated(UUID orderId, UUID buyerId, Integer itemCount, String totalAmount) {
+        auditLogger.info("ORDER_CREATED - orderId={}, buyerId={}, itemCount={}, totalAmount={}",
+                maskUuid(orderId), maskUuid(buyerId), itemCount, maskAmount(totalAmount));
     }
 
-    public void logStripeSessionCreated(UUID orderId, String stripeSessionId) {
-        auditLogger.info("STRIPE_SESSION_CREATED - orderId={}, stripeSessionId={}",
-                maskUuid(orderId), maskSensitiveData(stripeSessionId));
+    public void logRazorpayLinkCreated(UUID orderId, String paymentLinkId) {
+        auditLogger.info("RAZORPAY_LINK_CREATED - orderId={}, paymentLinkId={}",
+                maskUuid(orderId), maskSensitiveData(paymentLinkId));
     }
 
     public void logWebhookReceived(String eventId, String eventType, UUID orderId) {

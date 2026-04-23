@@ -1,18 +1,15 @@
 package com.ticketing.orderservice.service;
 
-import com.stripe.model.checkout.Session;
+import com.razorpay.PaymentLink;
+import com.ticketing.orderservice.client.EventServiceClient;
 import com.ticketing.orderservice.dto.*;
 import com.ticketing.orderservice.entity.Order;
 import com.ticketing.orderservice.entity.OrderItem;
 import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
-import com.ticketing.orderservice.repository.EventRepository;
 import com.ticketing.orderservice.repository.OrderItemRepository;
 import com.ticketing.orderservice.repository.OrderRepository;
-import com.ticketing.orderservice.repository.TicketTierRepository;
 import com.ticketing.orderservice.util.AuditService;
-import com.ticketing.orderservice.util.Event;
-import com.ticketing.orderservice.util.TicketTier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,94 +29,97 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final TicketTierRepository ticketTierRepository;
-    private final EventRepository eventRepository;
-    private final StripeService stripeService;
+    private final EventServiceClient eventServiceClient;
+    private final RazorpayService razorpayService;
     private final AuditService auditService;
 
     public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-                        TicketTierRepository ticketTierRepository, EventRepository eventRepository,
-                        StripeService stripeService, AuditService auditService) {
+                        EventServiceClient eventServiceClient,
+                        RazorpayService razorpayService, AuditService auditService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
-        this.ticketTierRepository = ticketTierRepository;
-        this.eventRepository = eventRepository;
-        this.stripeService = stripeService;
+        this.eventServiceClient = eventServiceClient;
+        this.razorpayService = razorpayService;
         this.auditService = auditService;
     }
 
     @Transactional
     public CreateOrderResponse createOrder(CreateOrderRequest request, UUID buyerId) {
-        TicketTier tier = ticketTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new TierNotFoundException(request.getTierId()));
-
-        if (!"ACTIVE".equals(tier.getStatus())) {
-            throw new InvalidTierStatusException(tier.getStatus());
-        }
-
-        if (tier.getRemainingQty() < request.getQuantity()) {
-            throw new InsufficientInventoryException(request.getQuantity(), tier.getRemainingQty());
-        }
-
-        if (request.getQuantity() > tier.getMaxPerOrder()) {
-            throw new QuantityExceedsMaxPerOrderException(request.getQuantity(), tier.getMaxPerOrder());
-        }
-
-        Event event = eventRepository.findById(tier.getEventId())
-                .orElseThrow(() -> new TierNotFoundException(request.getTierId()));
+        EventServiceResponse event = eventServiceClient.getEvent(request.getEventId())
+                .orElseThrow(() -> new EventNotFoundException(request.getEventId()));
 
         if (!"PUBLISHED".equals(event.getStatus())) {
             throw new InvalidEventStatusException(event.getStatus());
         }
 
-        BigDecimal totalAmount = tier.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
         UUID orderId = UUID.randomUUID();
         Instant now = Instant.now();
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
         Order order = new Order();
         order.setId(orderId);
         order.setBuyerId(buyerId);
         order.setStatus(OrderStatus.PENDING);
-        order.setTotalAmount(totalAmount);
         order.setCreatedAt(now);
         order.setUpdatedAt(now);
 
-        OrderItem orderItem = new OrderItem();
-        orderItem.setId(UUID.randomUUID());
-        orderItem.setOrder(order);
-        orderItem.setTierId(tier.getId());
-        orderItem.setTierName(tier.getName());
-        orderItem.setEventTitle(event.getTitle());
-        orderItem.setEventDate(event.getEventDate());
-        orderItem.setQuantity(request.getQuantity());
-        orderItem.setUnitPrice(tier.getPrice());
-        orderItem.setCreatedAt(now);
+        List<OrderItemResponse> responseItems = new ArrayList<>();
 
-        order.addItem(orderItem);
+        for (OrderItemRequest itemRequest : request.getItems()) {
+            EventServiceResponse.TierResponse tier = event.getTiers().stream()
+                    .filter(t -> t.getId().equals(itemRequest.getTierId()))
+                    .findFirst()
+                    .orElseThrow(() -> new TierNotFoundException(itemRequest.getTierId()));
+
+            if (!"ACTIVE".equals(tier.getStatus())) {
+                throw new InvalidTierStatusException(tier.getStatus());
+            }
+
+            if (itemRequest.getQuantity() > tier.getMaxPerOrder()) {
+                throw new QuantityExceedsMaxPerOrderException(itemRequest.getQuantity(), tier.getMaxPerOrder());
+            }
+
+            if (tier.getRemainingQty() < itemRequest.getQuantity()) {
+                throw new InsufficientInventoryException(itemRequest.getQuantity(), tier.getRemainingQty());
+            }
+
+            BigDecimal itemTotal = tier.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+            totalAmount = totalAmount.add(itemTotal);
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setId(UUID.randomUUID());
+            orderItem.setOrder(order);
+            orderItem.setTierId(tier.getId());
+            orderItem.setTierName(tier.getName());
+            orderItem.setEventTitle(event.getTitle());
+            orderItem.setEventDate(event.getEventDate());
+            orderItem.setQuantity(itemRequest.getQuantity());
+            orderItem.setUnitPrice(tier.getPrice());
+            orderItem.setCreatedAt(now);
+            order.addItem(orderItem);
+
+            responseItems.add(new OrderItemResponse(tier.getId(), itemRequest.getQuantity(), tier.getPrice()));
+        }
+
+        order.setTotalAmount(totalAmount);
         orderRepository.save(order);
 
-        auditService.logOrderCreated(orderId, buyerId, tier.getId(), request.getQuantity(), totalAmount.toString());
+        auditService.logOrderCreated(orderId, buyerId, request.getItems().size(), totalAmount.toString());
 
         String successUrl = "http://localhost:3000/orders/" + orderId + "/success";
         String cancelUrl = "http://localhost:3000/events/" + event.getId();
 
-        Long unitPriceInCents = tier.getPrice().multiply(BigDecimal.valueOf(100)).longValue();
-        Session session = stripeService.createCheckoutSession(
-                orderId,
-                tier.getName(),
-                request.getQuantity(),
-                unitPriceInCents,
-                successUrl,
-                cancelUrl
-        );
+        long totalAmountInPaise = totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
+        PaymentLink paymentLink = razorpayService.createPaymentLink(orderId, totalAmountInPaise, successUrl, cancelUrl);
 
-        order.setStripeSessionId(session.getId());
+        String paymentLinkId = paymentLink.get("id");
+        order.setRazorpayPaymentLinkId(paymentLinkId);
         order.setUpdatedAt(Instant.now());
         orderRepository.save(order);
 
-        auditService.logStripeSessionCreated(orderId, session.getId());
+        auditService.logRazorpayLinkCreated(orderId, paymentLinkId);
 
-        return new CreateOrderResponse(orderId, session.getUrl());
+        return new CreateOrderResponse(orderId, OrderStatus.PENDING.name(), totalAmount, responseItems);
     }
 
     @Transactional(readOnly = true)
@@ -198,7 +199,7 @@ public class OrderService {
                 order.getId(),
                 order.getStatus().name(),
                 order.getTotalAmount(),
-                order.getStripeSessionId(),
+                order.getRazorpayPaymentLinkId(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 items

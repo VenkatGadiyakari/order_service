@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
-    @ExceptionHandler({OrderNotFoundException.class, TierNotFoundException.class})
+    @ExceptionHandler({OrderNotFoundException.class, TierNotFoundException.class, EventNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFoundException(RuntimeException ex) {
         String traceId = MDC.get("traceId");
         logger.error("Resource not found", ex);
@@ -120,14 +120,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler(StripeServiceException.class)
-    public ResponseEntity<ErrorResponse> handleStripeServiceException(StripeServiceException ex) {
+    @ExceptionHandler(PaymentServiceException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentServiceException(PaymentServiceException ex) {
         String traceId = MDC.get("traceId");
-        logger.error("Stripe service error", ex);
-        auditService.logError("STRIPE_ERROR", ex.getMessage());
+        logger.error("Payment service error", ex);
+        auditService.logError("PAYMENT_ERROR", ex.getMessage());
 
         ErrorResponse error = new ErrorResponse(
-                "STRIPE_ERROR",
+                "PAYMENT_ERROR",
                 "Payment service error occurred",
                 Instant.now(),
                 traceId

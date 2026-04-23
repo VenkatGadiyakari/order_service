@@ -20,25 +20,24 @@ class AuditServiceTest {
     void testLogOrderCreated() {
         UUID orderId = UUID.randomUUID();
         UUID buyerId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
-        Integer quantity = 2;
+        Integer itemCount = 2;
         String totalAmount = "5000.00";
 
-        assertDoesNotThrow(() -> auditService.logOrderCreated(orderId, buyerId, tierId, quantity, totalAmount));
+        assertDoesNotThrow(() -> auditService.logOrderCreated(orderId, buyerId, itemCount, totalAmount));
     }
 
     @Test
-    void testLogStripeSessionCreated() {
+    void testLogRazorpayLinkCreated() {
         UUID orderId = UUID.randomUUID();
-        String stripeSessionId = "cs_test_123";
+        String paymentLinkId = "plink_test_123";
 
-        assertDoesNotThrow(() -> auditService.logStripeSessionCreated(orderId, stripeSessionId));
+        assertDoesNotThrow(() -> auditService.logRazorpayLinkCreated(orderId, paymentLinkId));
     }
 
     @Test
     void testLogWebhookReceived() {
-        String eventId = "evt_123";
-        String eventType = "checkout.session.completed";
+        String eventId = "pay_test123";
+        String eventType = "payment_link.paid";
         UUID orderId = UUID.randomUUID();
 
         assertDoesNotThrow(() -> auditService.logWebhookReceived(eventId, eventType, orderId));
@@ -77,19 +76,19 @@ class AuditServiceTest {
 
     @Test
     void testLogInvalidWebhookSignature() {
-        String sourceInfo = "stripe-webhook";
+        String sourceInfo = "razorpay-webhook";
 
         assertDoesNotThrow(() -> auditService.logInvalidWebhookSignature(sourceInfo));
     }
 
     @Test
     void testLogOrderCreatedWithNullValues() {
-        assertDoesNotThrow(() -> auditService.logOrderCreated(null, null, null, null, null));
+        assertDoesNotThrow(() -> auditService.logOrderCreated(null, null, null, null));
     }
 
     @Test
-    void testLogStripeSessionCreatedWithNullValues() {
-        assertDoesNotThrow(() -> auditService.logStripeSessionCreated(null, null));
+    void testLogRazorpayLinkCreatedWithNullValues() {
+        assertDoesNotThrow(() -> auditService.logRazorpayLinkCreated(null, null));
     }
 
     @Test

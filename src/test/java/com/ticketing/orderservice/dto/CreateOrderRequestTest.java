@@ -7,6 +7,8 @@ import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,27 +26,28 @@ class CreateOrderRequestTest {
 
     @Test
     void testValidCreateOrderRequest() {
-        UUID tierId = UUID.randomUUID();
-        CreateOrderRequest request = new CreateOrderRequest(tierId, 2);
+        UUID eventId = UUID.randomUUID();
+        List<OrderItemRequest> items = List.of(new OrderItemRequest(UUID.randomUUID(), 2));
+        CreateOrderRequest request = new CreateOrderRequest(eventId, items);
 
         Set<ConstraintViolation<CreateOrderRequest>> violations = validator.validate(request);
         assertTrue(violations.isEmpty());
-        assertEquals(tierId, request.getTierId());
-        assertEquals(2, request.getQuantity());
+        assertEquals(eventId, request.getEventId());
+        assertEquals(items, request.getItems());
     }
 
     @Test
-    void testCreateOrderRequestWithNullTierId() {
-        CreateOrderRequest request = new CreateOrderRequest(null, 2);
+    void testCreateOrderRequestWithNullEventId() {
+        List<OrderItemRequest> items = List.of(new OrderItemRequest(UUID.randomUUID(), 1));
+        CreateOrderRequest request = new CreateOrderRequest(null, items);
 
         Set<ConstraintViolation<CreateOrderRequest>> violations = validator.validate(request);
         assertFalse(violations.isEmpty());
-        assertEquals(1, violations.size());
-        assertTrue(violations.iterator().next().getMessage().contains("tierId"));
+        assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("eventId")));
     }
 
     @Test
-    void testCreateOrderRequestWithNullQuantity() {
+    void testCreateOrderRequestWithNullItems() {
         CreateOrderRequest request = new CreateOrderRequest(UUID.randomUUID(), null);
 
         Set<ConstraintViolation<CreateOrderRequest>> violations = validator.validate(request);
@@ -52,16 +55,8 @@ class CreateOrderRequestTest {
     }
 
     @Test
-    void testCreateOrderRequestWithZeroQuantity() {
-        CreateOrderRequest request = new CreateOrderRequest(UUID.randomUUID(), 0);
-
-        Set<ConstraintViolation<CreateOrderRequest>> violations = validator.validate(request);
-        assertFalse(violations.isEmpty());
-    }
-
-    @Test
-    void testCreateOrderRequestWithNegativeQuantity() {
-        CreateOrderRequest request = new CreateOrderRequest(UUID.randomUUID(), -1);
+    void testCreateOrderRequestWithEmptyItems() {
+        CreateOrderRequest request = new CreateOrderRequest(UUID.randomUUID(), Collections.emptyList());
 
         Set<ConstraintViolation<CreateOrderRequest>> violations = validator.validate(request);
         assertFalse(violations.isEmpty());
@@ -70,31 +65,31 @@ class CreateOrderRequestTest {
     @Test
     void testSettersAndGetters() {
         CreateOrderRequest request = new CreateOrderRequest();
-        UUID tierId = UUID.randomUUID();
-        Integer quantity = 5;
+        UUID eventId = UUID.randomUUID();
+        List<OrderItemRequest> items = List.of(new OrderItemRequest(UUID.randomUUID(), 3));
 
-        request.setTierId(tierId);
-        request.setQuantity(quantity);
+        request.setEventId(eventId);
+        request.setItems(items);
 
-        assertEquals(tierId, request.getTierId());
-        assertEquals(quantity, request.getQuantity());
+        assertEquals(eventId, request.getEventId());
+        assertEquals(items, request.getItems());
     }
 
     @Test
     void testNoArgsConstructor() {
         CreateOrderRequest request = new CreateOrderRequest();
         assertNotNull(request);
-        assertNull(request.getTierId());
-        assertNull(request.getQuantity());
+        assertNull(request.getEventId());
+        assertNull(request.getItems());
     }
 
     @Test
     void testAllArgsConstructor() {
-        UUID tierId = UUID.randomUUID();
-        Integer quantity = 3;
-        CreateOrderRequest request = new CreateOrderRequest(tierId, quantity);
+        UUID eventId = UUID.randomUUID();
+        List<OrderItemRequest> items = List.of(new OrderItemRequest(UUID.randomUUID(), 1));
+        CreateOrderRequest request = new CreateOrderRequest(eventId, items);
 
-        assertEquals(tierId, request.getTierId());
-        assertEquals(quantity, request.getQuantity());
+        assertEquals(eventId, request.getEventId());
+        assertEquals(items, request.getItems());
     }
 }
