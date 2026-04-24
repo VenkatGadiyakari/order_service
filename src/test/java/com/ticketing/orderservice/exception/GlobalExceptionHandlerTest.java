@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -121,18 +122,6 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("VALIDATION_FAILED", response.getBody().getErrorCode());
-    }
-
-    @Test
-    void testHandlePaymentServiceException() {
-        PaymentServiceException exception = new PaymentServiceException("Payment failed");
-
-        ResponseEntity<ErrorResponse> response = handler.handlePaymentServiceException(exception);
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("PAYMENT_ERROR", response.getBody().getErrorCode());
-        assertEquals("Payment service error occurred", response.getBody().getMessage());
     }
 
     @Test

@@ -27,17 +27,9 @@ class AuditServiceTest {
     }
 
     @Test
-    void testLogRazorpayLinkCreated() {
-        UUID orderId = UUID.randomUUID();
-        String paymentLinkId = "plink_test_123";
-
-        assertDoesNotThrow(() -> auditService.logRazorpayLinkCreated(orderId, paymentLinkId));
-    }
-
-    @Test
     void testLogWebhookReceived() {
         String eventId = "pay_test123";
-        String eventType = "payment_link.paid";
+        String eventType = "payment.captured";
         UUID orderId = UUID.randomUUID();
 
         assertDoesNotThrow(() -> auditService.logWebhookReceived(eventId, eventType, orderId));
@@ -51,11 +43,27 @@ class AuditServiceTest {
     }
 
     @Test
+    void testLogOrderConfirmedByPayment() {
+        UUID orderId = UUID.randomUUID();
+        String paymentRef = "pay_test_123456";
+
+        assertDoesNotThrow(() -> auditService.logOrderConfirmedByPayment(orderId, paymentRef));
+    }
+
+    @Test
     void testLogOrderFailed() {
         UUID orderId = UUID.randomUUID();
         String reason = "Insufficient inventory";
 
         assertDoesNotThrow(() -> auditService.logOrderFailed(orderId, reason));
+    }
+
+    @Test
+    void testLogOrderFailedByPayment() {
+        UUID orderId = UUID.randomUUID();
+        String reason = "Payment failed";
+
+        assertDoesNotThrow(() -> auditService.logOrderFailedByPayment(orderId, reason));
     }
 
     @Test
@@ -84,11 +92,6 @@ class AuditServiceTest {
     @Test
     void testLogOrderCreatedWithNullValues() {
         assertDoesNotThrow(() -> auditService.logOrderCreated(null, null, null, null));
-    }
-
-    @Test
-    void testLogRazorpayLinkCreatedWithNullValues() {
-        assertDoesNotThrow(() -> auditService.logRazorpayLinkCreated(null, null));
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.ticketing.orderservice.service;
 
-import com.razorpay.PaymentLink;
 import com.ticketing.orderservice.client.EventServiceClient;
 import com.ticketing.orderservice.dto.*;
 import com.ticketing.orderservice.entity.Order;
@@ -9,6 +8,7 @@ import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
 import com.ticketing.orderservice.repository.OrderItemRepository;
 import com.ticketing.orderservice.repository.OrderRepository;
+import com.ticketing.orderservice.repository.TicketTierRepository;
 import com.ticketing.orderservice.util.AuditService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,16 +30,16 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final EventServiceClient eventServiceClient;
-    private final RazorpayService razorpayService;
+    private final TicketTierRepository ticketTierRepository;
     private final AuditService auditService;
 
     public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                         EventServiceClient eventServiceClient,
-                        RazorpayService razorpayService, AuditService auditService) {
+                        TicketTierRepository ticketTierRepository, AuditService auditService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.eventServiceClient = eventServiceClient;
-        this.razorpayService = razorpayService;
+        this.ticketTierRepository = ticketTierRepository;
         this.auditService = auditService;
     }
 
@@ -53,7 +53,7 @@ public class OrderService {
         }
 
         UUID orderId = UUID.randomUUID();
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         Order order = new Order();
@@ -106,20 +106,63 @@ public class OrderService {
 
         auditService.logOrderCreated(orderId, buyerId, request.getItems().size(), totalAmount.toString());
 
-        String successUrl = "http://localhost:3000/orders/" + orderId + "/success";
-        String cancelUrl = "http://localhost:3000/events/" + event.getId();
+        return new CreateOrderResponse(orderId, OrderStatus.PENDING.name(), totalAmount, responseItems);
+    }
 
-        long totalAmountInPaise = totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
-        PaymentLink paymentLink = razorpayService.createPaymentLink(orderId, totalAmountInPaise, successUrl, cancelUrl);
+    @Transactional
+    public String confirmOrder(UUID orderId, String paymentReferenceId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        String paymentLinkId = paymentLink.get("id");
-        order.setRazorpayPaymentLinkId(paymentLinkId);
-        order.setUpdatedAt(Instant.now());
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            return OrderStatus.CONFIRMED.name();
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            auditService.logOrderFailed(orderId, "Cannot confirm order in status: " + order.getStatus());
+            return order.getStatus().name();
+        }
+
+        boolean allDecremented = true;
+        for (OrderItem item : order.getItems()) {
+            int rowsUpdated = ticketTierRepository.decrementRemainingQty(item.getTierId(), item.getQuantity());
+            if (rowsUpdated != 1) {
+                allDecremented = false;
+                break;
+            }
+            auditService.logInventoryDecremented(item.getTierId(), item.getQuantity());
+        }
+
+        order.setPaymentReferenceId(paymentReferenceId);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        if (allDecremented) {
+            order.setStatus(OrderStatus.CONFIRMED);
+            orderRepository.save(order);
+            auditService.logOrderConfirmedByPayment(orderId, paymentReferenceId);
+        } else {
+            order.setStatus(OrderStatus.FAILED);
+            orderRepository.save(order);
+            auditService.logOrderFailedByPayment(orderId, "Insufficient inventory at payment confirmation");
+        }
+
+        return order.getStatus().name();
+    }
+
+    @Transactional
+    public void failOrder(UUID orderId, String reason) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (order.getStatus() == OrderStatus.CONFIRMED || order.getStatus() == OrderStatus.FAILED) {
+            return;
+        }
+
+        order.setStatus(OrderStatus.FAILED);
+        order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
 
-        auditService.logRazorpayLinkCreated(orderId, paymentLinkId);
-
-        return new CreateOrderResponse(orderId, OrderStatus.PENDING.name(), totalAmount, responseItems);
+        auditService.logOrderFailedByPayment(orderId, reason);
     }
 
     @Transactional(readOnly = true)
@@ -199,7 +242,7 @@ public class OrderService {
                 order.getId(),
                 order.getStatus().name(),
                 order.getTotalAmount(),
-                order.getRazorpayPaymentLinkId(),
+                order.getPaymentReferenceId(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 items

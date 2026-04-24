@@ -1,7 +1,7 @@
 package com.ticketing.orderservice.util;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class TicketTier {
@@ -13,8 +13,8 @@ public class TicketTier {
     private Integer remainingQty;
     private Integer maxPerOrder;
     private String status;
-    private Instant saleStartsAt;
-    private Instant saleEndsAt;
+    private LocalDateTime saleStartsAt;
+    private LocalDateTime saleEndsAt;
 
     public TicketTier() {
     }
@@ -29,7 +29,7 @@ public class TicketTier {
         this.status = status;
     }
 
-    public TicketTier(UUID id, UUID eventId, String name, BigDecimal price, Integer remainingQty, Integer maxPerOrder, String status, Instant saleStartsAt, Instant saleEndsAt) {
+    public TicketTier(UUID id, UUID eventId, String name, BigDecimal price, Integer remainingQty, Integer maxPerOrder, String status, LocalDateTime saleStartsAt, LocalDateTime saleEndsAt) {
         this.id = id;
         this.eventId = eventId;
         this.name = name;
@@ -97,19 +97,19 @@ public class TicketTier {
         this.status = status;
     }
 
-    public Instant getSaleStartsAt() {
+    public LocalDateTime getSaleStartsAt() {
         return saleStartsAt;
     }
 
-    public void setSaleStartsAt(Instant saleStartsAt) {
+    public void setSaleStartsAt(LocalDateTime saleStartsAt) {
         this.saleStartsAt = saleStartsAt;
     }
 
-    public Instant getSaleEndsAt() {
+    public LocalDateTime getSaleEndsAt() {
         return saleEndsAt;
     }
 
-    public void setSaleEndsAt(Instant saleEndsAt) {
+    public void setSaleEndsAt(LocalDateTime saleEndsAt) {
         this.saleEndsAt = saleEndsAt;
     }
 }

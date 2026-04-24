@@ -16,11 +16,6 @@ public class AuditService {
                 maskUuid(orderId), maskUuid(buyerId), itemCount, maskAmount(totalAmount));
     }
 
-    public void logRazorpayLinkCreated(UUID orderId, String paymentLinkId) {
-        auditLogger.info("RAZORPAY_LINK_CREATED - orderId={}, paymentLinkId={}",
-                maskUuid(orderId), maskSensitiveData(paymentLinkId));
-    }
-
     public void logWebhookReceived(String eventId, String eventType, UUID orderId) {
         auditLogger.info("WEBHOOK_RECEIVED - eventId={}, eventType={}, orderId={}",
                 eventId, eventType, maskUuid(orderId));
@@ -30,8 +25,17 @@ public class AuditService {
         auditLogger.info("ORDER_CONFIRMED - orderId={}", maskUuid(orderId));
     }
 
+    public void logOrderConfirmedByPayment(UUID orderId, String paymentRef) {
+        auditLogger.info("ORDER_CONFIRMED_BY_PAYMENT - orderId={}, paymentRef={}",
+                maskUuid(orderId), maskSensitiveData(paymentRef));
+    }
+
     public void logOrderFailed(UUID orderId, String reason) {
         auditLogger.info("ORDER_FAILED - orderId={}, reason={}", maskUuid(orderId), reason);
+    }
+
+    public void logOrderFailedByPayment(UUID orderId, String reason) {
+        auditLogger.info("ORDER_FAILED_BY_PAYMENT - orderId={}, reason={}", maskUuid(orderId), reason);
     }
 
     public void logInventoryDecremented(UUID tierId, Integer quantity) {

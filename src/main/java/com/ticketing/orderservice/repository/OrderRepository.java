@@ -16,6 +16,4 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findByBuyerIdAndStatus(UUID buyerId, OrderStatus status, Pageable pageable);
 
     Optional<Order> findByIdAndBuyerId(UUID id, UUID buyerId);
-
-    Optional<Order> findByRazorpayPaymentLinkId(String razorpayPaymentLinkId);
 }

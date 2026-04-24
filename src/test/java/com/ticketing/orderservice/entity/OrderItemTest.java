@@ -3,7 +3,7 @@ package com.ticketing.orderservice.entity;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,10 +17,10 @@ class OrderItemTest {
         UUID tierId = UUID.randomUUID();
         String tierName = "VIP";
         String eventTitle = "Rock Concert 2026";
-        Instant eventDate = Instant.now();
+        LocalDateTime eventDate = LocalDateTime.now();
         Integer quantity = 2;
         BigDecimal unitPrice = new BigDecimal("2500.00");
-        Instant createdAt = Instant.now();
+        LocalDateTime createdAt = LocalDateTime.now();
 
         OrderItem item = new OrderItem(id, order, tierId, tierName, eventTitle, eventDate, quantity, unitPrice, createdAt);
 
@@ -43,10 +43,10 @@ class OrderItemTest {
         UUID tierId = UUID.randomUUID();
         String tierName = "Standard";
         String eventTitle = "Jazz Night";
-        Instant eventDate = Instant.now();
+        LocalDateTime eventDate = LocalDateTime.now();
         Integer quantity = 5;
         BigDecimal unitPrice = new BigDecimal("1000.00");
-        Instant createdAt = Instant.now();
+        LocalDateTime createdAt = LocalDateTime.now();
 
         item.setId(id);
         item.setOrder(order);
@@ -113,7 +113,7 @@ class OrderItemTest {
     @Test
     void testEventDateStorage() {
         OrderItem item = new OrderItem();
-        Instant eventDate = Instant.parse("2026-05-20T19:00:00Z");
+        LocalDateTime eventDate = LocalDateTime.of(2026, 5, 20, 19, 0, 0);
         item.setEventDate(eventDate);
         assertEquals(eventDate, item.getEventDate());
     }

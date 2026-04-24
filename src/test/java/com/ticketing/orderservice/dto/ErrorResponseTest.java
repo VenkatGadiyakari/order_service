@@ -2,7 +2,7 @@ package com.ticketing.orderservice.dto;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +12,7 @@ class ErrorResponseTest {
     void testValidErrorResponse() {
         String errorCode = "VALIDATION_FAILED";
         String message = "Invalid request";
-        Instant timestamp = Instant.now();
+        LocalDateTime timestamp = LocalDateTime.now();
         String traceId = "trace-123";
 
         ErrorResponse response = new ErrorResponse(errorCode, message, timestamp, traceId);
@@ -28,7 +28,7 @@ class ErrorResponseTest {
         ErrorResponse response = new ErrorResponse();
         String errorCode = "NOT_FOUND";
         String message = "Resource not found";
-        Instant timestamp = Instant.now();
+        LocalDateTime timestamp = LocalDateTime.now();
         String traceId = "trace-456";
 
         response.setErrorCode(errorCode);
@@ -56,7 +56,7 @@ class ErrorResponseTest {
     void testAllArgsConstructor() {
         String errorCode = "INTERNAL_ERROR";
         String message = "Server error";
-        Instant timestamp = Instant.now();
+        LocalDateTime timestamp = LocalDateTime.now();
         String traceId = "trace-789";
 
         ErrorResponse response = new ErrorResponse(errorCode, message, timestamp, traceId);

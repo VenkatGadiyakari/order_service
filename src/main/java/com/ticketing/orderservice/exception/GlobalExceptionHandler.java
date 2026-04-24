@@ -12,7 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 "UNAUTHORIZED",
                 "Authentication required or invalid credentials",
-                Instant.now(),
+                LocalDateTime.now(),
                 traceId
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 "ACCESS_DENIED",
                 "You do not have permission to access this order",
-                Instant.now(),
+                LocalDateTime.now(),
                 traceId
         );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 "NOT_FOUND",
                 ex.getMessage(),
-                Instant.now(),
+                LocalDateTime.now(),
                 traceId
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 "CONFLICT",
                 ex.getMessage(),
-                Instant.now(),
+                LocalDateTime.now(),
                 traceId
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 "VALIDATION_FAILED",
                 ex.getMessage(),
-                Instant.now(),
+                LocalDateTime.now(),
                 traceId
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -114,25 +114,10 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 "VALIDATION_FAILED",
                 errorMessage,
-                Instant.now(),
+                LocalDateTime.now(),
                 traceId
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(PaymentServiceException.class)
-    public ResponseEntity<ErrorResponse> handlePaymentServiceException(PaymentServiceException ex) {
-        String traceId = MDC.get("traceId");
-        logger.error("Payment service error", ex);
-        auditService.logError("PAYMENT_ERROR", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                "PAYMENT_ERROR",
-                "Payment service error occurred",
-                Instant.now(),
-                traceId
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
     @ExceptionHandler(Exception.class)
@@ -144,7 +129,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 "INTERNAL_ERROR",
                 "An unexpected error occurred",
-                Instant.now(),
+                LocalDateTime.now(),
                 traceId
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);

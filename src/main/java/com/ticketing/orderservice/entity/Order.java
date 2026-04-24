@@ -2,7 +2,7 @@ package com.ticketing.orderservice.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,14 +25,14 @@ public class Order {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "razorpay_payment_link_id")
-    private String razorpayPaymentLinkId;
+    @Column(name = "payment_reference_id")
+    private String paymentReferenceId;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> items = new ArrayList<>();
@@ -40,12 +40,12 @@ public class Order {
     public Order() {
     }
 
-    public Order(UUID id, UUID buyerId, OrderStatus status, BigDecimal totalAmount, String razorpayPaymentLinkId, Instant createdAt, Instant updatedAt) {
+    public Order(UUID id, UUID buyerId, OrderStatus status, BigDecimal totalAmount, String paymentReferenceId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.buyerId = buyerId;
         this.status = status;
         this.totalAmount = totalAmount;
-        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
+        this.paymentReferenceId = paymentReferenceId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -82,27 +82,27 @@ public class Order {
         this.totalAmount = totalAmount;
     }
 
-    public String getRazorpayPaymentLinkId() {
-        return razorpayPaymentLinkId;
+    public String getPaymentReferenceId() {
+        return paymentReferenceId;
     }
 
-    public void setRazorpayPaymentLinkId(String razorpayPaymentLinkId) {
-        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
+    public void setPaymentReferenceId(String paymentReferenceId) {
+        this.paymentReferenceId = paymentReferenceId;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Instant getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 

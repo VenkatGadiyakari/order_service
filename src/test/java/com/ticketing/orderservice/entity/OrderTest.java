@@ -3,7 +3,7 @@ package com.ticketing.orderservice.entity;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,16 +16,16 @@ class OrderTest {
         UUID buyerId = UUID.randomUUID();
         OrderStatus status = OrderStatus.PENDING;
         BigDecimal totalAmount = new BigDecimal("5000.00");
-        String razorpayPaymentLinkId = "plink_test_123";
-        Instant now = Instant.now();
+        String paymentReferenceId = "pay_test_123";
+        LocalDateTime now = LocalDateTime.now();
 
-        Order order = new Order(id, buyerId, status, totalAmount, razorpayPaymentLinkId, now, now);
+        Order order = new Order(id, buyerId, status, totalAmount, paymentReferenceId, now, now);
 
         assertEquals(id, order.getId());
         assertEquals(buyerId, order.getBuyerId());
         assertEquals(status, order.getStatus());
         assertEquals(totalAmount, order.getTotalAmount());
-        assertEquals(razorpayPaymentLinkId, order.getRazorpayPaymentLinkId());
+        assertEquals(paymentReferenceId, order.getPaymentReferenceId());
         assertEquals(now, order.getCreatedAt());
         assertEquals(now, order.getUpdatedAt());
         assertNotNull(order.getItems());
@@ -39,15 +39,15 @@ class OrderTest {
         UUID buyerId = UUID.randomUUID();
         OrderStatus status = OrderStatus.CONFIRMED;
         BigDecimal totalAmount = new BigDecimal("3000.00");
-        String razorpayPaymentLinkId = "plink_test_456";
-        Instant createdAt = Instant.now();
-        Instant updatedAt = Instant.now();
+        String paymentReferenceId = "pay_test_456";
+        LocalDateTime createdAt = LocalDateTime.now();
+        LocalDateTime updatedAt = LocalDateTime.now();
 
         order.setId(id);
         order.setBuyerId(buyerId);
         order.setStatus(status);
         order.setTotalAmount(totalAmount);
-        order.setRazorpayPaymentLinkId(razorpayPaymentLinkId);
+        order.setPaymentReferenceId(paymentReferenceId);
         order.setCreatedAt(createdAt);
         order.setUpdatedAt(updatedAt);
 
@@ -55,7 +55,7 @@ class OrderTest {
         assertEquals(buyerId, order.getBuyerId());
         assertEquals(status, order.getStatus());
         assertEquals(totalAmount, order.getTotalAmount());
-        assertEquals(razorpayPaymentLinkId, order.getRazorpayPaymentLinkId());
+        assertEquals(paymentReferenceId, order.getPaymentReferenceId());
         assertEquals(createdAt, order.getCreatedAt());
         assertEquals(updatedAt, order.getUpdatedAt());
     }
@@ -111,7 +111,7 @@ class OrderTest {
         assertNull(order.getBuyerId());
         assertNull(order.getStatus());
         assertNull(order.getTotalAmount());
-        assertNull(order.getRazorpayPaymentLinkId());
+        assertNull(order.getPaymentReferenceId());
         assertNull(order.getCreatedAt());
         assertNull(order.getUpdatedAt());
         assertNotNull(order.getItems());

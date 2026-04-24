@@ -2,7 +2,7 @@ package com.ticketing.orderservice.util;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +13,7 @@ class EventTest {
     void testEventCreation() {
         UUID id = UUID.randomUUID();
         String title = "Rock Concert 2026";
-        Instant eventDate = Instant.now();
+        LocalDateTime eventDate = LocalDateTime.now();
         String status = "PUBLISHED";
 
         Event event = new Event(id, title, eventDate, status);
@@ -29,7 +29,7 @@ class EventTest {
         Event event = new Event();
         UUID id = UUID.randomUUID();
         String title = "Jazz Night";
-        Instant eventDate = Instant.now();
+        LocalDateTime eventDate = LocalDateTime.now();
         String status = "PUBLISHED";
 
         event.setId(id);
@@ -56,7 +56,7 @@ class EventTest {
     @Test
     void testEventDateStorage() {
         Event event = new Event();
-        Instant eventDate = Instant.parse("2026-05-20T19:00:00Z");
+        LocalDateTime eventDate = LocalDateTime.of(2026, 5, 20, 19, 0, 0);
         event.setEventDate(eventDate);
         assertEquals(eventDate, event.getEventDate());
     }

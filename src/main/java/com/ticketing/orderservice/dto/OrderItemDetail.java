@@ -1,7 +1,7 @@
 package com.ticketing.orderservice.dto;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class OrderItemDetail {
@@ -10,15 +10,15 @@ public class OrderItemDetail {
     private UUID tierId;
     private String tierName;
     private String eventTitle;
-    private Instant eventDate;
+    private LocalDateTime eventDate;
     private Integer quantity;
     private BigDecimal unitPrice;
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     public OrderItemDetail() {
     }
 
-    public OrderItemDetail(UUID orderItemId, UUID tierId, String tierName, String eventTitle, Instant eventDate, Integer quantity, BigDecimal unitPrice, Instant createdAt) {
+    public OrderItemDetail(UUID orderItemId, UUID tierId, String tierName, String eventTitle, LocalDateTime eventDate, Integer quantity, BigDecimal unitPrice, LocalDateTime createdAt) {
         this.orderItemId = orderItemId;
         this.tierId = tierId;
         this.tierName = tierName;
@@ -61,11 +61,11 @@ public class OrderItemDetail {
         this.eventTitle = eventTitle;
     }
 
-    public Instant getEventDate() {
+    public LocalDateTime getEventDate() {
         return eventDate;
     }
 
-    public void setEventDate(Instant eventDate) {
+    public void setEventDate(LocalDateTime eventDate) {
         this.eventDate = eventDate;
     }
 
@@ -85,11 +85,11 @@ public class OrderItemDetail {
         this.unitPrice = unitPrice;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 }

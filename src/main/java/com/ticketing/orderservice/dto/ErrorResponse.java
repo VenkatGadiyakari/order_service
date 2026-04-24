@@ -1,18 +1,18 @@
 package com.ticketing.orderservice.dto;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public class ErrorResponse {
 
     private String errorCode;
     private String message;
-    private Instant timestamp;
+    private LocalDateTime timestamp;
     private String traceId;
 
     public ErrorResponse() {
     }
 
-    public ErrorResponse(String errorCode, String message, Instant timestamp, String traceId) {
+    public ErrorResponse(String errorCode, String message, LocalDateTime timestamp, String traceId) {
         this.errorCode = errorCode;
         this.message = message;
         this.timestamp = timestamp;
@@ -35,11 +35,11 @@ public class ErrorResponse {
         this.message = message;
     }
 
-    public Instant getTimestamp() {
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Instant timestamp) {
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
