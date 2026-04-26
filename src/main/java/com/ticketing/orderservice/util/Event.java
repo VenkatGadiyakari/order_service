@@ -1,19 +1,19 @@
 package com.ticketing.orderservice.util;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Event {
 
     private UUID id;
     private String title;
-    private Instant eventDate;
+    private LocalDateTime eventDate;
     private String status;
 
     public Event() {
     }
 
-    public Event(UUID id, String title, Instant eventDate, String status) {
+    public Event(UUID id, String title, LocalDateTime eventDate, String status) {
         this.id = id;
         this.title = title;
         this.eventDate = eventDate;
@@ -36,11 +36,11 @@ public class Event {
         this.title = title;
     }
 
-    public Instant getEventDate() {
+    public LocalDateTime getEventDate() {
         return eventDate;
     }
 
-    public void setEventDate(Instant eventDate) {
+    public void setEventDate(LocalDateTime eventDate) {
         this.eventDate = eventDate;
     }
 

@@ -1,7 +1,7 @@
 package com.ticketing.orderservice.dto;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,13 +10,13 @@ public class OrderSummary {
     private UUID orderId;
     private String status;
     private BigDecimal totalAmount;
-    private Instant createdAt;
+    private LocalDateTime createdAt;
     private List<OrderItemSummary> items;
 
     public OrderSummary() {
     }
 
-    public OrderSummary(UUID orderId, String status, BigDecimal totalAmount, Instant createdAt, List<OrderItemSummary> items) {
+    public OrderSummary(UUID orderId, String status, BigDecimal totalAmount, LocalDateTime createdAt, List<OrderItemSummary> items) {
         this.orderId = orderId;
         this.status = status;
         this.totalAmount = totalAmount;
@@ -48,11 +48,11 @@ public class OrderSummary {
         this.totalAmount = totalAmount;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 

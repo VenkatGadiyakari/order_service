@@ -2,7 +2,7 @@ package com.ticketing.orderservice.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -27,7 +27,7 @@ public class OrderItem {
     private String eventTitle;
 
     @Column(name = "event_date", nullable = false)
-    private Instant eventDate;
+    private LocalDateTime eventDate;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
@@ -36,12 +36,12 @@ public class OrderItem {
     private BigDecimal unitPrice;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     public OrderItem() {
     }
 
-    public OrderItem(UUID id, Order order, UUID tierId, String tierName, String eventTitle, Instant eventDate, Integer quantity, BigDecimal unitPrice, Instant createdAt) {
+    public OrderItem(UUID id, Order order, UUID tierId, String tierName, String eventTitle, LocalDateTime eventDate, Integer quantity, BigDecimal unitPrice, LocalDateTime createdAt) {
         this.id = id;
         this.order = order;
         this.tierId = tierId;
@@ -93,11 +93,11 @@ public class OrderItem {
         this.eventTitle = eventTitle;
     }
 
-    public Instant getEventDate() {
+    public LocalDateTime getEventDate() {
         return eventDate;
     }
 
-    public void setEventDate(Instant eventDate) {
+    public void setEventDate(LocalDateTime eventDate) {
         this.eventDate = eventDate;
     }
 
@@ -117,11 +117,11 @@ public class OrderItem {
         this.unitPrice = unitPrice;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 }

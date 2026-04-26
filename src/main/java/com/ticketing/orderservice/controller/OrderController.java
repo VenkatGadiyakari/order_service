@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Tag(name = "Orders", description = "Create orders and view order history. All endpoints require a BUYER JWT.")
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {

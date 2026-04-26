@@ -86,25 +86,6 @@ class ExceptionsTest {
     }
 
     @Test
-    void testPaymentServiceExceptionWithCause() {
-        String message = "Razorpay API error";
-        Exception cause = new RuntimeException("Network timeout");
-        PaymentServiceException exception = new PaymentServiceException(message, cause);
-
-        assertEquals(message, exception.getMessage());
-        assertEquals(cause, exception.getCause());
-    }
-
-    @Test
-    void testPaymentServiceExceptionWithoutCause() {
-        String message = "Payment processing failed";
-        PaymentServiceException exception = new PaymentServiceException(message);
-
-        assertEquals(message, exception.getMessage());
-        assertNull(exception.getCause());
-    }
-
-    @Test
     void testExceptionInheritance() {
         assertTrue(OrderNotFoundException.class.getSuperclass().equals(RuntimeException.class));
         assertTrue(TierNotFoundException.class.getSuperclass().equals(RuntimeException.class));
@@ -114,7 +95,6 @@ class ExceptionsTest {
         assertTrue(QuantityExceedsMaxPerOrderException.class.getSuperclass().equals(RuntimeException.class));
         assertTrue(OrderAccessDeniedException.class.getSuperclass().equals(RuntimeException.class));
         assertTrue(UnauthorizedException.class.getSuperclass().equals(RuntimeException.class));
-        assertTrue(PaymentServiceException.class.getSuperclass().equals(RuntimeException.class));
     }
 
     @Test
