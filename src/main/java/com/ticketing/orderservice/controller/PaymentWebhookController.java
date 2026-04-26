@@ -5,11 +5,16 @@ import com.ticketing.orderservice.exception.PaymentServiceException;
 import com.ticketing.orderservice.service.PaymentWebhookService;
 import com.ticketing.orderservice.service.RazorpayService;
 import com.ticketing.orderservice.util.AuditService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Webhooks", description = "Razorpay webhook receiver — called by Razorpay, not by clients")
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentWebhookController {
@@ -27,10 +32,14 @@ public class PaymentWebhookController {
         this.auditService = auditService;
     }
 
+    @Operation(summary = "Razorpay webhook",
+            description = "Receives payment events from Razorpay (payment.captured, payment.failed, etc.). " +
+                    "Verifies the HMAC-SHA256 signature and updates order status to CONFIRMED or FAILED.")
+    @ApiResponse(responseCode = "200", description = "Webhook acknowledged (always 200 to prevent Razorpay retries)")
     @PostMapping("/webhook")
     public ResponseEntity<WebhookResponse> handleWebhook(
             @RequestBody String payload,
-            @RequestHeader("X-Razorpay-Signature") String sigHeader) {
+            @Parameter(description = "HMAC-SHA256 signature from Razorpay") @RequestHeader("X-Razorpay-Signature") String sigHeader) {
 
         try {
             razorpayService.verifyWebhookSignature(payload, sigHeader);
